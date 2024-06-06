@@ -1,0 +1,133 @@
+---
+title: "A dynamic document"
+output: html_document 
+runtime: shiny
+---
+
+<br>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+<!---
+# Setting the HTML page width (optional) 
+!--->
+
+```{css Setting the HTML page width (optional),}
+.main-container {
+  max-width: 100% !important;
+  margin: auto;
+}
+```
+
+
+```{r packages, include=FALSE}
+library(ggplot2)
+theme_set(theme_minimal())
+library(DT)
+```
+
+```{r data}
+data <- data.frame(diamonds)
+dt <- data[sapply(data, is.numeric)]
+```
+
+
+```{r, UiInputs}
+
+in1 <- selectInput(
+  inputId = "variable",
+  label = "Choose a variable",
+  choices = names(dt)
+)
+
+in2 <- selectInput("select",
+  label = "Select a plot",
+  choices = list("histogram" = 1, "boxplot" = 2),
+  selected = 1
+)
+
+in3 <- renderUI({
+  if (input$select == 1) {
+    sliderInput(
+      inputId = "bins",
+      label = "Number of bins:",
+      min = 1,
+      max = 50,
+      value = 15
+    )
+  }
+})
+```
+
+```{r, Outputs}
+
+out1 <- renderDT(data,
+  filter = "top",
+  options = list(dom = "ltp")
+)
+
+out2a <- renderPlot(
+  {
+    p <- ggplot(dt) +
+      aes(x = get(input$variable)) +
+      labs(x = input$variable)
+    if (input$select == 1) {
+      p <- p + geom_histogram(bins = input$bins, color = "black", fill = "grey")
+    } 
+    else if (input$select == 2) {
+      p <- p + aes(y = "") + geom_boxplot() + labs(y = NULL)
+    }
+    p
+  },
+  height = 550
+)
+
+out2b <- renderPlot(
+  {
+    p <- ggplot(dt, aes(x = log(get(input$variable)))) +
+      labs(x = paste0("log(", input$variable, ")"))
+    if (input$select == 1) {
+      p <- p + geom_histogram(bins = input$bins, color = "black", fill = "grey")
+    } 
+    else if (input$select == 2) {
+      p <- p + aes(y = "") + geom_boxplot() + labs(y = NULL)
+    }
+    p
+  },
+  height = 550
+)
+```
+
+
+```{r, Layout1}
+out1
+```
+
+<br>
+
+<br>
+```{r, Layout2}
+sidebarLayout(
+  sidebarPanel(
+    in1,
+    in2,
+    in3,
+    width = 3
+  ),
+  mainPanel(
+    tabsetPanel(
+      tabPanel("Original scale", out2a),
+      tabPanel("Log scale", out2b)
+    ),
+    width = 9
+  )
+)
+```
+
+<br>
+
+<br>
+<br>
+<br>

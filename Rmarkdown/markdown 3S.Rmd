@@ -1,0 +1,212 @@
+---  
+title: "An RMarkdown report"
+author: "Your name"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    df_print: paged
+    toc: yes
+  xaringan::moon_reader:
+    nature:
+      ratio: '16:9'
+    self_contained: true 
+    df_print: paged  
+  pdf_document: default    
+  rmdformats::readthedown: 
+    df_print: paged
+  word_document: default
+  html_document: 
+    theme: yeti
+    highlight: kate
+    df_print: paged
+---   
+
+```{r setup, include = FALSE}
+require(knitr)
+
+opts_chunk$set(
+  echo = FALSE,
+  comment = "",
+  tidy = "styler",
+  fig.align = "center",
+  fig.width = 7,
+  fig.asp = 0.62,
+  out.width = "100%"
+)
+
+options(digits = 3)
+```
+
+```{r}
+# Automatically set the variable xar to TRUE when 
+# "output: xaringan::moon_reader" in the YAML
+#The variable xar is used to get the xaringan presentation form this Rmd file   
+
+xar <- names(rmarkdown::metadata$output[1]) == "xaringan::moon_reader"
+```
+
+
+## Data description
+
+In this project we consider the classical `iris` data set that can be found in the base R package `datasets`. `iris` has 
+_**`r ncol(iris)`**_
+columns named 
+_**`r paste(names(iris), collapse=", ")`**_ 
+and 
+_**`r nrow(iris)`**_  
+observations. 
+
+To get help about columns, run `?iris`. 
+
+The data set `iris` is
+
+```{r}
+iris
+```
+
+
+
+<!-- see https://github.com/yihui/knitr/releases/tag/v1.37 -->
+````{asis, echo = xar}
+---
+````
+
+
+## Descriptive analysis
+
+First, we compute some descriptive statistics with the `summary()` function:
+
+```{r, R.options = list(knitr.kable.NA = "")}
+summary(iris) |> kable(caption = "Descriptive statistics")
+```
+
+````{asis, echo = xar}
+---
+````
+
+Second, we use the function `aggregate` to get the following table that shows the means of the $4$ numerical variables for each species.
+
+```{r}
+aggregate(cbind(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width) ~ Species, data = iris, mean) |>
+  kable(
+    caption = "Means by species",
+    col.names = c("Species", "Sepal Length", "Sepal Width", "Petal Length", "Petal Width")
+  )
+```
+
+````{asis, echo = xar}
+---
+````
+
+## Linear regression
+
+We use the function `cor()` to get the Pearson's coefficients of correlation between all our numeric variables: 
+
+```{r}
+cor(iris[1:4]) |>
+  kable(caption = "Pearson's coefficients of correlation")
+```
+
+````{asis, echo = xar}
+---
+````
+
+Here are 3 scatter plots that show the association between `Petal.Length` and the other numerical variables. 
+
+```{r}
+#| fig.align = "default",
+#| fig.show = "hold",
+#| out.width = "50%",
+#| fig.width = 5,
+#| fig.asp = 0.8
+
+par(mar = c(4, 4, 1, 1))
+
+plot(Sepal.Length ~ Petal.Length, data = iris)
+plot(Sepal.Width ~ Petal.Length, data = iris)
+```
+
+````{asis, echo = xar}
+---
+````
+
+```{r}
+#| fig.align = "default",
+#| fig.show = "hold",
+#| out.width = "50%",
+#| fig.width = 5,
+#| fig.asp = 0.8
+
+par(mar = c(4, 4, 1, 1))
+
+plot(Petal.Width ~ Petal.Length, data = iris)
+```
+
+````{asis, echo = xar}
+---
+````
+
+Now, we would like to explain the variations in the length of the sepal as a function of the length of the petal. To do so, we use the following linear regression `lm(Sepal.Length ~ Petal.Length, data = iris)`. Here is the summary of this model:
+
+```{r}
+reg <- lm(Sepal.Length ~ Petal.Length, data = iris)
+summary(reg)$coef |>
+  kable(
+    caption = "Summary of lm: Sepal.Length ~ Petal.Length",
+    digits = c(3, 3, 3, 50)
+  )
+```
+
+
+The model's equation is 
+$$
+\widehat{Sepal.Length} = `r coef(reg)[1]`+ `r coef(reg)[2]` Petal.Length.
+$$
+
+
+Here are the data with the regression line:
+
+````{asis, echo = xar}
+---
+````
+
+```{r}
+#| fig.show = "hold",
+#| out.width = "80%"
+
+par(mar = c(4, 4, 1, 1))
+plot(Sepal.Length ~ Petal.Length, data = iris, ylab = "Sepal length", xlab = "Petal length")
+abline(reg)
+```
+
+````{asis, echo = xar}
+---
+````
+
+Finally, we use the `plot(reg)` command to get some graphical representations of the residuals.
+
+```{r}
+#| fig.cap = "Residuals plot 1",
+#| fig.align = "default",
+#| fig.show = "hold",
+#| out.width = "50%",
+#| fig.width = 5,
+#| fig.asp = 0.8
+
+plot(reg, which = 1:2)
+```
+
+````{asis, echo = xar}
+---
+````
+
+```{r}
+#| fig.cap = "Residuals plot 2",
+#| fig.align = "default",
+#| fig.show = "hold",
+#| out.width = "50%",
+#| fig.width = 5,
+#| fig.asp = 0.8
+
+plot(reg, which = 3:4)
+```

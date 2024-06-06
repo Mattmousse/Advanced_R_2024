@@ -1,0 +1,201 @@
+---
+title: "A Simulation Study"
+author: "Your name"
+output: 
+  bookdown::html_document2:
+    theme: readable
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    number_sections: yes
+---
+
+```{r, eval = F, echo = T}
+title: "A Simulation Study"
+author: "Your name"
+output: 
+  bookdown::html_document2:
+    theme: readable
+    highlight: tango
+    toc: yes                   # c'est la table des matières
+    toc_depth: 2               
+    toc_float: yes             # Ici c'est le fait que ce soit sur le côté (plus stylé)
+    number_sections: yes
+```
+
+```{r setup, include = TRUE, results='hide', message= FALSE}
+require(knitr)
+
+opts_chunk$set(
+  echo = TRUE,
+  comment = "",
+  tidy = "styler",
+  fig.align = "center",
+  fig.width = 8,
+  fig.asp = 0.62,
+  out.width = "100%"
+)
+
+options(digits = 3)
+```
+
+```{r klippy, include=TRUE}
+klippy::klippy(position = c("top", "right"))
+```
+
+
+
+```{r, eval = F, echo = T}
+Le chunk ici permet de faire les panneaux joli c_est surtout le .tabset, 
+le .tabset-pills permet de faire des ronds bleus
+
+le {-} apres normal distribution c_est juste pour eviter d_ajouter le numero de section du YAML en haut. 
+
+# Data {.tabset .tabset-pills}
+
+## Normal distribution {-}
+
+```
+
+
+
+# Data {.tabset .tabset-pills}
+
+## Normal distribution {-}
+
+We first recall the definition of a normal random variable (displayed through a *quote* environment).
+
+
+```{r, eval = F, echo = T}
+# Ca c'est le truc bleu joli
+> A random variable $X$ is said to be normally distributed with mean $\mu$ and
+variance $\sigma^2$ if it has a probability density function $f:\mathbb{R}
+\rightarrow \mathbb{R}^+$ given by
+> $$
+  f(x)=\frac{1}{\sqrt{2\pi}\sigma}\exp\left\{-\frac{(x-\mu)^2}{2 \sigma^2}\right\} (\#eq:nor)
+  $$
+
+```
+
+> A random variable $X$ is said to be normally distributed with mean $\mu$ and
+variance $\sigma^2$ if it has a probability density function $f:\mathbb{R}
+\rightarrow \mathbb{R}^+$ given by
+> $$
+  f(x)=\frac{1}{\sqrt{2\pi}\sigma}\exp\left\{-\frac{(x-\mu)^2}{2 \sigma^2}\right\} (\#eq:nor)
+  $$
+
+This is written as $X \sim N(\mu, \sigma^2)$.
+
+More details about normal random variables (r.v.) can be found on [this
+page](https://en.wikipedia.org/wiki/Normal_distribution).
+
+## Simulations {-}
+
+The R function `rnorm` allows us to draw simulations from the normal density function as given by Equation \@ref(eq:nor). 
+
+Let fix some parameters and generate some data.
+
+```{r simul.param, echo=TRUE}
+set.seed(1)
+n <- 100
+mu <- 100
+stdev <- 2
+v <- stdev^2
+b0 <- 2
+b1 <- 1
+X <- rnorm(n, mu, stdev)
+Y <- b0 + b1 * X + rnorm(n)
+samp <- data.frame(X = X, Y = Y)
+samp
+```
+
+As you can see, we draw _**`r n`**_ realizations from two random variables : $X \sim N$(_**`r mu`**_, _**`r v`**_) and $Y=b_0+b_1\times X+ \epsilon$, with $b_0=$ _**`r b0`**_, $b_1=$ _**`r b1`**_, and $\epsilon \sim N(0,1)$.
+
+Observe that if you re- render the Rmd (source) file with different parameters `(n, mu, stdev, b0, b1)`, then all the numbers above get updated automatically. Check it!  
+
+The simulated data will be use to fit a linear model, See the section [Linear model](#ll) .
+
+# Descriptive statistics {.tabset .tabset-pills}
+
+## Summary statistics {-}
+
+* The empirical mean and variance of $X$ are  _**`r mean(samp$X) |> round()`**_ and _**`r var(samp$X) |> round()`**_, respectively.   
+
+* The empirical mean and  variance of $Y$ are  _**`r mean(samp$Y) |> round()`**_ and _**`r var(samp$Y) |> round()`**_, respectively.
+
+Let's summarize the simulations with the help of the `summary` function.
+
+```{r, eval = F}
+Lets summarize the simulations with the help of the `summary` function.
+# le summary c'est avec altGr + 7
+```
+
+```{r}
+summary(samp) |> kable()
+```
+
+## Histogram of X {-}
+
+We can use the `hist` function to display, for example, the histogram of $X$:
+
+```{r}
+title.histX <- paste(" Hstogram of X, a Nomal R.V. with mean ", mu, " and varaince", v)
+hist(samp$X, main = title.histX, xlab = "")
+```
+
+## Histogram of Y {-}
+
+Similarly here is a histogram of $Y$:
+
+```{r}
+hist(samp$Y, main = "Hstogram of Y", xlab = "")
+```
+
+
+# Linear model {#ll .tabset .tabset-pills}
+
+## The model {-}
+
+We built a linear regression model using
+
+```{r fit, echo=TRUE}
+fit <- lm(Y ~ X, data = samp)
+```
+
+We get the following output
+
+```{r}
+summary(fit)$coef |>
+  kable()
+```
+
+The coefficient of determination ($R^2)$ of this model is _**`r summary(fit)$r.squared `**_.
+
+## Scatter plot with regression line {-}
+
+```{r}
+#| fig.cap="Fitted linear model"
+plot(Y ~ X, data = samp)
+abline(fit)
+```
+
+```{r, eval = F}
+pour le caption de la figure il y a cette commande au dessus du plot 
+#| fig.cap="Fitted linear model"
+```
+
+## Residuals and fitted values {-}
+
+The model fitted values (`fitted`) and residuals (`fit$residuals`) are
+
+```{r}
+data.frame(fitted = fit$fitted.values, residuals = fit$residuals) |> round(3)
+```
+
+## Diagnostic plot {-}
+
+```{r}
+#| fig.cap="Residuals vs fitted values"
+plot(fit$residuals ~ fit$fitted.values, xlab = "fitted", ylab = "residuals")
+```

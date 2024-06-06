@@ -1,0 +1,53 @@
+---
+title: "Exponent App"
+output: html_document
+runtime: shiny
+---
+
+<br>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+<!---
+# Setting the HTML page width (optional) 
+!--->
+
+```{css Setting the HTML page width (optional)}
+.main-container {
+  max-width: 100% !important;
+  margin: auto;
+}
+```
+
+```{r, Packages, include=FALSE}
+require(ggplot2)
+theme_set(theme_minimal())
+require(latex2exp)
+```
+
+```{r, UiInputs}
+sliderInput(
+  inputId = "n",
+  label = "Choose the exponent n",
+  value = 0,
+  min = 0,
+  max = 4,
+  step = 0.5
+)
+```
+
+```{r, ReacVariables}
+n <- reactive(input$n)
+```
+
+```{r, Outputs}
+renderPlot({
+  ggplot() +
+    geom_function(fun = function(x) x^n(), color = 'red', size = 2) +
+    geom_point(color = 'grey') +
+    xlim(-10, 10) +
+    labs(title = TeX(paste("Curve of $y=x^n$ for $n=", n(), "$")), x = "x")
+})
+```

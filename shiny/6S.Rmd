@@ -1,0 +1,128 @@
+---
+title: "Normality test"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: united
+runtime: shiny
+---
+
+
+```{r packages, include=FALSE}
+require(ggplot2)
+theme_set(theme_minimal() + theme(legend.position = "top"))
+require(DT)
+options(shiny.maxRequestSize = 300*1024^2)  # Set the maximum request size to 30MB
+options(shiny.maxFilesize = 300*1024^2)   # Set the maximum file size to 30MB
+```
+
+## {.sidebar} 
+
+Your `csv` file needs to use a _comma as field separator and period as decimal separator_.
+
+```{r input1}
+
+fileInput(
+  inputId = "csvFile",
+  label = "Please upload a .csv file"
+)
+
+df <- reactive({
+  if (is.null(input$csvFile)) {
+    return(NULL)
+  } else {
+    read.csv(input$csvFile$datapath, nrows = 1000)
+  }
+})
+```
+
+
+```{r input2}
+
+renderUI({
+  selectInput("varchoice",
+    label = "Check the normality of",
+    choices = names(df())[sapply(df(), is.numeric)]
+  )
+})
+
+
+radioButtons("normchoice",
+  label = "Which plot to use to check Normality?",
+  choices = c("Density", "QQ-plot"),
+  selected = "Density"
+)
+```
+
+                      
+## {.tabset}
+
+### Data
+
+```{r data}
+
+renderDT(df())
+
+```
+
+
+### Plot
+
+```{r Plot output}
+
+renderPlot({
+  req(input$csvFile)
+  if (input$normchoice == "Density") {
+    p <- ggplot(df(), aes(x = get(input$varchoice)))
+    p <- p + geom_density(size = 1, aes(color = "Sample"))
+    p <- p + stat_function(
+      fun = dnorm,
+      args = list(mean = mean(df()[[input$varchoice]]), sd = sd(df()[[input$varchoice]])),
+      size = 1,
+      aes(color = "Normal")
+    )
+    p <- p + labs(x = input$varchoice, color = "Density")
+  } else {
+    p <- ggplot(df(), aes(sample = get(input$varchoice))) +
+      geom_qq() +
+      geom_qq_line(color = "red", size = 1)
+  }
+  p
+})
+```
+
+
+### Test
+
+#### 
+
+```{r Test}
+st <- reactive({
+  req(input$varchoice)
+  st <- shapiro.test(df()[[input$varchoice]])
+})
+```
+
+Shapiro-Wilk normality test: 
+
+* Test statistic : 
+`r renderText(round(st()$stat, 5))`
+
+* Test p-value : 
+`r renderText(st()$p.val)`
+
+
+
+```{r, Decision}
+dst <- reactive({
+  req(st())
+  if (st()$p.val < 0.05) {
+    dst <- "reject"
+  } else {
+    dst <- "do not reject"
+  }
+  dst
+})
+```
+
+
+* Decision (at $\alpha=5\%$) : Data **`r renderText(dst())`** Normality

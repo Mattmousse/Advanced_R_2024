@@ -1,0 +1,93 @@
+---
+title: "A Simulation Study"
+author: "Your name"
+output: 
+  html_document:
+    theme: readable
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    number_sections: yes
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r packages 2, include=TRUE}
+require(ggplot2)
+require(reshape2)
+```
+
+```{r settings 2, include=TRUE}
+theme_set(theme_bw())
+```
+
+Use the `tips` data from the `reshape2` package to reproduce the following graphics.  Hint: Among others, you may need to use the `ggplot2` functions:  `stat_summary()`, `theme()`, `facet_grid()`, `labs()`, `geom_jitter()`, `geom_boxplot()`, `geom_point()`, and `geom_smooth()`.    
+
+# Comparaison de données {.tabset .tabset-pills}
+
+## Mean comparaison two variables {-}
+```{r}
+# 1
+ggplot(tips, aes(y = total_bill, x = sex, fill = sex)) +
+  stat_summary(fun = "mean", geom = "bar", width = 0.05) +
+  facet_grid(col = vars(smoker), labeller = label_both) +
+  labs(y = "total_bill's mean") +
+  theme(legend.position = "none") +
+  labs(title = "Mean of total_bill by sex and smoker")
+```
+
+## visualization of data and mean {-}
+```{r}
+# 2
+ggplot(tips, aes(x = sex, y = total_bill)) +
+  geom_jitter(alpha = 0.2, width = 0.2, height = 0) +
+  stat_summary(geom = "point", fun = "mean", size = 4, shape = 13, color = "red") +
+  facet_grid(col = vars(smoker), labeller = label_both) +
+  labs(title = "jitter of total_bill by sex and smoker. The mean for each group is indicated by a circle-cross")
+```
+
+## Boxplot comparison and bining {-}
+```{r}
+# 3
+ggplot(tips, aes(x = cut(total_bill, breaks = c(3, 18, 25, 51)), y = tip)) +
+  geom_boxplot(varwidth = TRUE) +
+  facet_grid(col = vars(sex), labeller = label_both) +
+  labs(x = "total_bill") +
+  labs(title = "boxplot of tip by sex and total_bill (categorized)")
+```
+## adapt size to a variable {-}
+```{r}
+# 4
+ggplot(tips, aes(x = total_bill, y = tip)) +
+  geom_point() +
+  aes(color = sex, size = size)
+```
+
+## data point comparison {-}
+```{r}
+# 5
+ggplot(tips, aes(x = total_bill, y = tip)) +
+  geom_point() +
+  aes(color = sex) +
+  facet_grid(row = vars(sex)) +
+  theme(legend.position = "none")
+```
+
+## regression line depending on two variables {-}
+```{r}
+# 6
+ggplot(tips, aes(x = total_bill, y = tip)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  aes(color = smoker) +
+  facet_grid(row = vars(smoker), col = vars(sex), labeller = label_both) +
+  theme(legend.position = "none")
+```

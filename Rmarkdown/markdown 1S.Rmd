@@ -1,0 +1,138 @@
+---
+title: "Exercice 1"
+output: 
+  bookdown::pdf_document2:
+  df_print: kable
+toc: false  
+urlcolor: blue
+linkcolor: blue   
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  comment = "",
+  tidy = "styler",
+  fig.align = "center",
+  fig.width = 9,
+  fig.asp = 0.62,
+  out.width = "85%"
+)
+
+options(digits = 3)
+```
+
+```{r packages, include=FALSE}
+require(kableExtra)
+```
+
+```{r data, echo=FALSE}
+dataCar = read.csv("TP 1/Data/dataCar.csv")
+```
+
+**1.** The dimension of the data (num. of rows, num. of columns) is `r dm <- dim(dataCar)` (***`r dm[1]`***, ***`r dm[2]`***).
+
+**2.** The first six lines of this data are
+
+```{r, echo = T}
+head(dataCar) |> kbl(booktabs = F) 
+```
+```{r, echo = T}
+head(dataCar) |> kbl(booktabs = T) 
+```
+**3.** Using the R function `str()`, we get the structure of the data
+
+```{r}
+str(dataCar)
+```
+
+**4.** We made use of the function `subset()` to delete the first column of `dataCar` and the function `transform()` to transform the variables `clm`, `numclaims`, `veh_body`, `veh_age`, `gender`, `area`, and `agecat` to a factor. The summary of the resulting data is
+
+```{r}
+datCar <- subset(dataCar, select = -X)
+datCar <- transform(dataCar,  clm = factor(clm),
+                    numclaims = factor(numclaims),
+                    veh_body = factor(veh_body),
+                    veh_age = factor(veh_age),
+                    gender = factor(gender),
+                    area = factor(area),
+                    agecat = factor(agecat))
+
+
+summary(datCar)
+```
+
+**5.** Below is a Barplot of `numclaims`.
+
+```{r}
+#| fig.cap = 'Barplot of `numclaims`'
+
+proportions(barplot(table(datCar$numclaims), xlab = "numclaims", ylab = "%"))
+```
+
+
+**6.** We define `dataCar0` to be the subset data with *only variables* `claimcst0` and `veh_value` and *only subjects* with (`claimcst0` $>0$) and (`agecat` $=3$ or $4$). In the flowing we will work with this data. Its summary appears below.
+
+```{r}
+datCar0 <- datCar |> subset(
+  subset = (claimcst0 > 0) & (agecat == 3 | agecat == 4),
+  select = c("claimcst0", "veh_value")
+)
+
+summary(datCar0)
+```
+
+**7.** We fit a linear regression model with `veh_value` as independent variable and `claimcst0` as dependent variable. We also fit another linear model but this time with `log(claimcst0)` as dependent variable. The summary of each model is given below.
+
+-   claimcst0 \~ veh_value
+
+```{r}
+fit1 <- lm(claimcst0 ~ veh_value, data = datCar0)
+summary(fit1)$coef
+```
+
+-   log(claimcst0) \~ veh_value
+
+```{r}
+fit2 <- lm(log(claimcst0) ~ veh_value, data = datCar0)
+summary(fit2)$coef
+```
+
+**8.** We compute, for each model, a $95\%$ confidence intervals (confint) for the intercept and the slope parameters. We then use the `kableExtra` functions `kbl()`, `kable_styling()`, `pack_rows()` and `add_header_above()`, to construct the following table.
+
+```{r, echo= T}
+rbind(
+  cbind(summary(fit1)$coef, confint(fit1)),
+  cbind(summary(fit2)$coef, confint(fit2))
+) |>
+  kbl(
+    booktabs = TRUE,
+    linesep = "",
+    digits = 3
+  ) |>
+  kable_styling(
+    latex_options = "HOLD_position",
+    position = "center"
+  ) |>
+  pack_rows("claimcst0~veh_value", 1, 2) |>
+  pack_rows("log(claimcst0)~veh_value", 3, 4) |>
+  add_header_above(c(" " = 4, "confint" = 3))
+```
+
+**9.** Figure \@ref(fig:fig1) below show the scatterplots "claimcst0\~veh_value" and "log(claimcst0)\~veh_value" (side by side) with the corresponding least squares regression lines.
+
+```{r fig1, out.width="50%", fig.asp = 0.8, fig.align = "default", fig.show = "hold"}
+#| fig.cap = 'Least Squares Regression Lines; (a) Y = claimcst0 and (b) Y = log(claimcst0)'
+
+par(mar = c(5, 4, 2, 2))
+plot(claimcst0 ~ veh_value, data = datCar0)
+title(sub = "(a)")
+abline(fit1, col = "blue")
+
+
+plot(log(claimcst0) ~ veh_value, data = datCar0)
+title(sub = "(b)")
+abline(fit2, col = "blue")
+```
+
+To lean more about linear regression, visit the website of [Introduction to Modern Statistics](https://openintro-ims.netlify.app/model-slr.html#model-slr).

@@ -1,0 +1,355 @@
+---
+title: "A Simulation Study"
+author: "Your name"
+output: 
+  html_document:
+    theme: readable
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    number_sections: yes
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r packages 1, include=FALSE}
+require(ggplot2)
+require(patchwork)
+```
+
+```{r settings 1, include=FALSE}
+theme_set(theme_bw())
+```
+
+```{r}
+klippy::klippy(position = c("top", "right"))
+```
+
+# Data {.tabset .tabset-pills}
+
+## Presentation {-}
+
+For this exercise, we will use the data `diamonds` from the package `ggplot2`. A detailed description of these data can be found
+[here](https://ggplot2.tidyverse.org/reference/diamonds.html).
+
+First, run the following command to take a random subsample of size 400 from the original sample that contains more than 50000 observations:
+
+```{r, echo=TRUE, comment=TRUE}
+set.seed(10)
+diamonds2 <- diamonds[sample(nrow(diamonds), size = 400), ]
+```
+
+Change the default `ggplot` theme to `bw`. Set this globally for your **entire R session**.
+
+# Scatter plot {.tabset .tabset-pills}
+
+## easy one {-}
+1. Generate a scatter plot of `price` (y) versus `carat` (x), make the points bigger by setting size to 2. Save your plot into an R object (call it `p1` for example).  
+
+```{r}
+p1 <- ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2)
+p1
+```
+
+## blue {-}
+2. Color all the points in blue. 
+
+```{r}
+ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2, color = "blue")
+```
+
+
+## map color on variable {-}
+
+3. Extending the plot from question 1 (i.e., using the object `p1`),  map the color of the points to the variable `cut`. Use `geom_rug` to visualize the marginal distributions of the two variables (`carat` and `price`). Also, add a legend at the top of your plot and set its title to "Cut quality".      
+
+```{r}
+p1 <- ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2) +
+# on ajoute ça 
+  aes(col = cut) +
+  geom_rug(aes(col = NULL), alpha = 0.2) +
+  theme(legend.position = "top") +
+  labs(col = "Cut quality")
+p1
+```
+
+## map with conditions {-}
+4. Extending the plot from question 1, map the shape and the color of the points to the indicator variable $I(depth>62.5)$, i.e., the binary variable taking values `TRUE` or `FALSE` according to whether $depth>62.5$ or not. 
+
+```{r}
+p1 <- ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2)
+# on ajoute ça 
+p4 <- p1 +
+  aes(shape = depth > 62, color = depth > 62)
+p4
+```
+
+## add another layer {-}
+5. Extending the previous question, map the color of the points to the variable `cut`; keep the mapping between shape and $I(depth>62.5)$. 
+
+```{r}
+p4 <- ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2) +
+  aes(shape = depth > 62, color = depth > 62)
+
+p5 <- p4 +
+  aes(color = cut)
+p5
+```
+
+## add labels {-}
+6. Extending the previous question, add axis labels and title so that the resulting plot looks like this.
+
+```{r}
+p5 <- ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2) +
+  aes(shape = depth > 62) +
+  aes(color = cut)
+
+p5 + labs(title = "Diamonds data: price versus carat.",
+          subtitle = "Color by cut and shape by depth",
+          x = "Number of carats", y = "Price in US dollars")
+```
+
+# Regression line {.tabset .tabset-pills}
+
+## two lines {-}
+
+7. Extending the plot from question 4, add two least-squares lines: one for `depth>62.5` and another for `depth<=62.5`. Your plot should not include any confidence-intervals. 
+
+```{r}
+p4 <- ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2) +
+  aes(shape = depth > 62, color = depth > 62)
+p7 <- p4 +
+  geom_smooth(method = "lm", se = FALSE) #SE is standard error
+p7
+```
+
+## change lines type and colors {-}
+
+8. Same question as before but this time the two lines should have the same color but different line type. Hint: Use `aes(inetype = depth > 62)` within `geom_smooth`.  
+
+```{r}
+p4 <- ggplot(diamonds2) +
+  aes(x = carat, y = price) +
+  geom_point(size = 2) +
+  aes(shape = depth > 62, color = depth > 62)
+p8 <- p4 + 
+  geom_smooth(method = "lm", se = FALSE,color = 'gray',
+              aes(linetype = depth > 62))
+p8
+```
+
+## adapt the point color {-}
+9. Extending the previous question, set the color of all the points to gray. 
+
+```{r}
+p8 + geom_point(color = "gray", size = 2)
+```
+
+# adapt regression lines {.tabset .tabset-pills}
+
+## only one line {-}
+10. Extending the plot from question 4, add one global least-squares line (without distinguishing `depth>62.5` and `depth<=62.5`). Your plot should not include any confidence-intervals.    
+
+```{r}
+p10 <- p4 +
+  geom_smooth(method = "lm", se = FALSE, col = "gray", aes(shape = NULL))
+p10
+```
+
+
+## linetype {-}
+11. Extending the plot of question 7, overlay the global least-squares line on top of your scatter plot. Your plot should look like this. Hint: Use `linetype = 3` within `geom_smooth`.
+```{r}
+p11 <- p7 +
+  geom_smooth(method = "lm", se = FALSE, col = "gray", linetype = 3, aes(shape = NULL))
+p11
+```
+
+# Transformations of variables {.tabset .tabset-pills}
+
+## log {-}
+12. Redo the previous question but with `x=log10(carat)` and `y=log10(price)`.
+```{r}
+p11 + aes(x = log10(carat), y = log10(price))
+```
+
+
+## Change window {-}
+13. Following from question 10, display only the region of the plot with $0.3\le carat \le 1$ and $1000\le price \le 10000$. Yous should visually zoom in this region without modifying the data.  Hint: use `coord_cartesian`; more details [here](https://ggplot2.tidyverse.org/reference/coord_cartesian.html). 
+
+```{r}
+p10 +
+  coord_cartesian(x = c(0.3, 1), y = c(1000, 10000))
+```
+
+## plot only in window {-}
+14. The same question as before but, this time, you should remove all the data outside the provided limits (not only zooming in that region).   Hint: use the ggplot function `lims`.
+```{r}
+p10 +
+  lims(x = c(0.3, 1), y = c(1000, 10000))
+```
+
+# different models regression{.tabset .tabset-pills}
+
+## exp {-}
+15. Extending the plot from question 1 (with the full original data), overlay 2 least-square lines on top of your scatter plot: one corresponding to $y \sim x$ and the second corresponding to $y \sim \exp(x)$. Your plot should look like this. Hint: use `geom_smooth` with the argument `formula`.
+
+```{r}
+p1 +
+  geom_smooth(method = "lm", se = FALSE, aes(col = "y~x")) +
+  geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, aes(col = "y~exp(x)")) +
+  labs(col = "Method")
+```
+
+# barplot {.tabset .tabset-pills}
+## easy one {-}
+16. Create a barplot showing the _proportion_ of each `cut`.
+
+```{r}
+# Method 1
+
+p16 <- ggplot(diamonds2, aes(x = cut)) + 
+  geom_bar(alpha = 0.5, aes(y = ..count../sum(..count..))) + 
+  labs(y = "prop") 
+p16
+```
+
+## other method {-}
+```{r}
+# Method 2
+
+tb <- xtabs(~cut, data = diamonds2) |>
+  proportions() |>
+  data.frame()
+
+ggplot(tb, aes(x = cut, y = Freq)) +
+  geom_col(alpha = 0.5) +
+  labs(y = "prop")
+```
+
+## Bining {-}
+17. Create the variable $priceC=1 \times I(price \le 1040) +2 \times I(1040 < price \le 3300) + 3 \times I(price>3300)$. Make two barplots showing the proportion/percentage of each category of `price` per `cut` class. Do your best to get exactly the same figures as below. Hint: You may need to use the base R functions `cut()`, `xtabs()` and `proportions()` and the ggplot functions `geom_col()` and `geom_text()`. 
+```{r}
+diamonds2$priceC <- cut(diamonds2$price, c(-Inf, 1040, 3300, Inf), labels = 1:3)
+```
+
+
+## barplot empilé {-}
+```{r, fig.width=9}
+# Plot 1
+
+ggplot(data = diamonds2) +
+  geom_bar(mapping = aes(x = cut, fill = priceC), position = "fill") +
+  labs(y = "prop")
+```
+
+## barplot by categories {-}
+```{r, fig.width=9}
+# Plot 2
+
+tb2 <- xtabs(~ priceC + cut, data = diamonds2) |>
+  proportions("cut") |>
+  data.frame()
+
+ggplot(tb2, aes(x = priceC, y = Freq*100)) +
+  geom_col(alpha = 0.5) +
+  facet_grid(cols = vars(cut)) +
+  geom_text(aes(label = round(Freq*100,0)), vjust = 5) +
+  labs(y = "Pecent")
+
+```
+
+# Comparison with other function {.tabset .tabset-pills}
+## add a normal density {-}
+18. We would like to examine the distribution of $log(price)$. More precisely, we would like to see, graphically, if a normal assumption is reasonable. To do so, you are asked to overlay a normal density curve (with the empirical mean and the empirical standard deviation) to the histogram of this variable. The resulting figure should look like this.
+
+```{r}
+lprice <- log(diamonds2$price)
+m.lprice <- mean(lprice)
+s.lprice <- sd(lprice)
+lpbreaks <- lprice |> pretty(nclass.Sturges(lprice))
+
+ggplot(diamonds2) +
+  aes(x = log(price)) +
+  geom_histogram(aes(y = ..density..), fill = "gray", alpha = 0.8, col = "white", breaks = lpbreaks) +
+  stat_function(fun = dnorm, aes(y = log(price)), args = list(mean = m.lprice, sd = s.lprice), xlim = c(5.5, 10)) +
+  scale_x_continuous(breaks = lpbreaks) +
+  labs(x = "Logarithm of the price", y = "Density", title = "Histogram of the logarithm of price \n together with the adjusted Normal density (black curve)")
+```
+
+## add normal CDF {-}
+19. The same question as before but, this time, use the cumulative distribution function (CDF) instead of the density. Hint: Use the `ggplot2` function `stat_ecdf()`.    
+```{r}
+ggplot(diamonds2) +
+  aes(x = log(price)) +
+  stat_ecdf(geom = "step", col = "red") +
+  stat_function(fun = pnorm, aes(y = log(price)), args = list(mean = m.lprice, sd = s.lprice)) +
+  labs(x = "Logarithm of the price", y = "CDF", title = "Empirical CDF of the logarithm of price \n together with the adjusted Normal CDF (black curve)")
+```
+
+# boite a moustaches {.tabset .tabset-pills}
+
+## easy one {-}
+20. Now, we would like to study the distribution of `price` in each category of `cut`. Do so by making the following plot. 
+```{r}
+p20 <- ggplot(diamonds2, aes(y = price, x = cut)) +
+  geom_boxplot(varwidth = F) +
+  coord_flip() +
+  scale_x_discrete(labels = c("Fair \n (n = 10)", "Good \n (n = 43)", "Very Good \n (n = 93)", "Premium \n (n = 96)", "Ideal \n (n = 158)")) +
+  labs(x = NULL)
+p20
+```
+
+## relou one {-}
+21. The same question as before but, this time, you are asked to reproduce this plot.  
+```{r}
+# diamonds2$cut |> table()
+p21 <- ggplot(diamonds2, aes(y = price, x = cut)) +
+  geom_violin(color = 'blue', fill = "lightgray", alpha = 0.3, trim = FALSE) + # trim change un truc dans la forme des violons 
+  geom_boxplot(width = 0.25, varwidth = TRUE, outlier.shape = NA, fill = NA) +
+  geom_jitter(width = 0.1, height = 0, alpha = 0.2) #evite l'overlap des points
+p21
+```
+
+# truc trop beau
+22. Use the functions `ggplot::geom_qq()` and `ggplot::geom_qq_line()` and the package `patchwork` to produce a single plot that shows a box-plot, a density-plot and a qq-plot of `price` by `cut`. 
+
+```{r, fig.width=10, fig.asp=0.7, out.width="100%"}
+p22.a <- ggplot(diamonds2, aes(x = cut, y = price, col = cut)) +
+  geom_boxplot(varwidth = TRUE, size = 1, outlier.shape = NA) +
+  geom_jitter(width = 0.2, alpha = 0.2) +
+  theme(legend.position = "none")
+
+p22.b <- ggplot(diamonds2, aes(x = price, fill = cut, col = cut)) +
+  geom_density(alpha = 0.1, size = 1)
+
+p22.c <- ggplot(diamonds2, aes(sample = price, col = cut), size = 2) +
+  geom_qq() +
+  geom_qq_line() +
+  facet_grid(cols = vars(cut), labeller = label_both) +
+  theme(legend.position = "none")
+
+((p22.a + p22.b) / p22.c) + plot_layout(guides = "collect")
+```

@@ -1,0 +1,130 @@
+---
+title: "My first dashboard"
+output: flexdashboard::flex_dashboard
+---
+
+```{r packages 3, include=FALSE}
+library(kableExtra)
+library(DT)
+library(ggplot2)
+library(plotly)
+```
+
+
+# Data
+
+## {.sidebar data-width=260}
+
+The famous (Fisher's or Anderson's) iris data set gives the measurements in centimeters of the:
+
+* sepal length (Sepal.Length),
+* sepal width (Sepal.Width),
+* petal length (Petal.Length),
+* petal width (Petal.Width).
+
+for 50 flowers from each of 3 species (Species) of iris. The species are: _setosa_, _versicolor_, and _virginica_. 
+
+The data were collected by Anderson, Edgar (1935). 
+
+
+More details about the data are provided [here](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/iris.html).
+
+## 
+
+
+```{r}
+datatable(iris,
+  filter = "top",
+  fillContainer=FALSE,
+  options = list(
+    scrollY = "500px",
+    lengthMenu = c(5,15, 50, 100, 150),
+    dom = "lt"
+  )
+)
+```
+
+
+# Exploration
+
+
+
+## {data-width=400}
+
+
+**Tables**
+
+
+### **Table 1:** Summary statistics by Species
+
+```{r}
+res1 <- aggregate(Petal.Length ~ Species, data = iris, FUN = summary)[[2]]
+rownames(res1) <- levels(iris$Species)
+
+res1 |>
+  kbl(
+    digits = 2,
+    caption = "Petal.Length"
+  ) |>
+  kable_minimal()
+
+res2 <- aggregate(Petal.Width ~ Species, data = iris, FUN = summary)[[2]]
+rownames(res2) <- levels(iris$Species)
+
+res2 |>
+  kbl(
+    digits = 2,
+    caption = "Petal.Width"
+  ) |>
+  kable_minimal()
+```
+
+
+###  **Table 2:** Linear model Petal.Width ~ Petal.Length by species
+
+
+```{r}
+m1 <- lm(Petal.Width ~ Petal.Length, data = subset(iris, Species == "setosa"))
+m2 <- lm(Petal.Width ~ Petal.Length, data = subset(iris, Species == "versicolor"))
+m3 <- lm(Petal.Width ~ Petal.Length, data = subset(iris, Species == "virginica"))
+
+rbind(summary(m1)$coef, summary(m2)$coef, summary(m3)$coef) |>
+  kbl(digits = 2) |>
+  kable_minimal() |>
+  pack_rows("setosa", 1, 2) |>
+  pack_rows("versicolor", 3, 4) |>
+  pack_rows("virginica", 5, 6)
+```
+
+
+## {.tabset .tabset-pills}
+
+**Figures**
+
+### **Figure 1:** Density estimates
+
+```{r}
+irisL <- cbind(
+  Species = iris$Species,
+  iris |> stack(select = -Species)
+)
+
+p1 <- ggplot(subset(irisL, ind %in% c("Petal.Length", "Petal.Width"))) +
+  aes(x = values, fill = Species) +
+  geom_density(alpha = .5) +
+  facet_wrap(facets = vars(ind)) +
+  labs(x = "", y = "Density")
+
+ggplotly(p1)
+```
+
+### **Figure 2:** Linear models 
+
+```{r}
+p2 <- ggplot(iris) +
+  aes(x = Petal.Length, y = Petal.Width, color = Species) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+ggplotly(p2)
+```
